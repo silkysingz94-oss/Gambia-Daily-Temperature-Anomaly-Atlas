@@ -1453,6 +1453,7 @@ function initCharts(){
 function updateAnomalyChart(values){
   if(!anomalyChart) return;
 
+  anomalyChart.data.labels=activeLocationIndices.map(i=>String(locations[i].id).padStart(2,"0"));
   anomalyChart.data.datasets[0].data =
     activeLocationIndices.map(i=>values[i]?.anomaly??null);
 
