@@ -1,0 +1,1 @@
+# Gambia-Daily-Temperature-Anomaly-Atlas
