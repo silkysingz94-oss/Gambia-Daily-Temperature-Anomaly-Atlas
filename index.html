@@ -249,7 +249,7 @@ footer{
   <section class="workspace">
 
     <!-- CONTROLS -->
-    <aside class="panel">
+    <aside class="panel control-panel">
       <div class="panel-heading">
         <span>01 / CONTROL CENTRE</span>
         <span style="color:var(--cyan)">INPUTS</span>
@@ -1580,7 +1580,7 @@ function advanceScan(){
   scanMarker.setPopupContent(
     `<strong>Animated sample-grid scan</strong><br>`+
     `${point.name}<br>`+
-    `Location ${scanIndex+1} of ${locations.length}<br>`+
+    `Location ${scanIndex+1} of ${activeLocationIndices.length}<br>`+
     `Latitude: ${point.lat.toFixed(3)}<br>`+
     `Longitude: ${point.lon.toFixed(3)}<br>`+
     `Daily anomaly: ${formatSigned(anomaly)} °C`
