@@ -39,18 +39,151 @@ function initMap(){map=L.map('map',{zoomControl:true,preferCanvas:true}).setView
 function setStatus(t,err=false){$('status').textContent=t;$('status').className='status'+(err?' error':'')}
 $('base').onchange=()=>{Object.values(baseLayers).forEach(l=>map.removeLayer(l));baseLayers[$('base').value].addTo(map)};
 function iso(d){return d.toISOString().slice(0,10)}function dateRange(y){let a=new Date(Date.UTC(y,5,1)),b=new Date(Date.UTC(y,9,10)),out=[];for(let d=a;d<=b;d.setUTCDate(d.getUTCDate()+1))out.push(iso(d));return out}
-function apiUrl(start,end){let lat=pts.map(p=>p.lat).join(','),lon=pts.map(p=>p.lon).join(',');return 'https://archive-api.open-meteo.com/v1/archive?latitude='+lat+'&longitude='+lon+'&start_date='+start+'&end_date='+end+'&daily=temperature_2m_max&timezone=Africa%2FBanjul&models=era5_land&temperature_unit=celsius'}
-async function getJSON(url){let r=await fetch(url);if(!r.ok)throw new Error('Weather API returned HTTP '+r.status);return r.json()}
+function apiUrl(start,end,locations=pts){
+  const lat=locations.map(p=>p.lat).join(','),lon=locations.map(p=>p.lon).join(',');
+  return 'https://archive-api.open-meteo.com/v1/archive?latitude='+lat+'&longitude='+lon+'&start_date='+start+'&end_date='+end+'&daily=temperature_2m_max&timezone=Africa%2FBanjul&models=era5_land&temperature_unit=celsius';
+}
+const BASELINE_CACHE_KEY='gbos_era5land_tmax_normals_1991_2020_v2';
+const sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms));
+async function getJSON(url,maxRetries=5){
+  let lastError;
+  for(let attempt=0;attempt<=maxRetries;attempt++){
+    try{
+      const response=await fetch(url,{headers:{'Accept':'application/json'}});
+      if(response.ok){
+        const data=await response.json();
+        if(data&&data.error)throw new Error(data.reason||'Weather API returned an error.');
+        return data;
+      }
+      const retryable=[429,500,502,503,504].includes(response.status);
+      if(!retryable||attempt===maxRetries)throw new Error('Weather API returned HTTP '+response.status+(response.status===429?' (rate limit)':''));
+      const retryAfter=Number(response.headers.get('Retry-After'));
+      const wait=Number.isFinite(retryAfter)&&retryAfter>0?Math.min(retryAfter*1000,60000):2000*Math.pow(2,attempt);
+      setStatus('Weather service is busy (HTTP '+response.status+'). Retrying in '+Math.ceil(wait/1000)+' seconds…',true);
+      await sleep(wait);
+    }catch(error){
+      lastError=error;
+      if(error.message&&error.message.startsWith('Weather API returned HTTP ')&&!/HTTP (429|500|502|503|504)/.test(error.message))throw error;
+      if(attempt===maxRetries)throw error;
+      const wait=2000*Math.pow(2,attempt);
+      setStatus('Connection interrupted. Retrying in '+Math.ceil(wait/1000)+' seconds…',true);
+      await sleep(wait);
+    }
+  }
+  throw lastError||new Error('Unable to retrieve climate data.');
+}
 function asLocations(j){return Array.isArray(j)?j:[j]}
-function makeBaseline(locations){return locations.map(loc=>{let sums={},counts={},d=loc.daily;d.time.forEach((date,i)=>{let key=date.slice(5);if(!Number.isFinite(d.temperature_2m_max[i]))return;sums[key]=(sums[key]||0)+d.temperature_2m_max[i];counts[key]=(counts[key]||0)+1});let out={};Object.keys(sums).forEach(k=>out[k]=sums[k]/counts[k]);return out})}
+function makeBaseline(locations){
+  return locations.map(loc=>{
+    const sums={},counts={},d=loc.daily;
+    d.time.forEach((date,i)=>{
+      const key=date.slice(5),value=d.temperature_2m_max[i];
+      if(!Number.isFinite(value))return;
+      sums[key]=(sums[key]||0)+value;counts[key]=(counts[key]||0)+1;
+    });
+    const out={};
+    Object.keys(sums).forEach(k=>out[k]=sums[k]/counts[k]);
+    return out;
+  });
+}
 function fmt(v){return (v>0?'+':'')+v.toFixed(2)+' °C'}
-async function loadSeason(){stopPlay();$('load').disabled=true;setStatus('Retrieving 30-year ERA5-Land daily baseline and selected-season data for 30 sample locations…');frames=[];markers.forEach(m=>map.removeLayer(m));markers=[];let year=Number($('year').value),dates=dateRange(year);try{
-let [baseData,seasonData]=await Promise.all([getJSON(apiUrl('1991-01-01','2020-12-31')),getJSON(apiUrl(dates[0],dates[dates.length-1]))]);
-let bl=asLocations(baseData),sl=asLocations(seasonData);if(bl.length!==pts.length||sl.length!==pts.length)throw new Error('Unexpected number of sample locations returned by the API.');
-let normals=makeBaseline(bl);for(let i=0;i<dates.length;i++){let vals=[];for(let p=0;p<pts.length;p++){let ix=sl[p].daily.time.indexOf(dates[i]);let actual=ix>=0?sl[p].daily.temperature_2m_max[ix]:null;let normal=normals[p][dates[i].slice(5)];vals.push({actual,normal,anom:Number.isFinite(actual)&&Number.isFinite(normal)?actual-normal:null})}frames.push({date:dates[i],vals})}
-rawRows=[];frames.forEach(f=>f.vals.forEach((v,i)=>rawRows.push({date:f.date,latitude:pts[i].lat,longitude:pts[i].lon,tmax:v.actual,normal:v.normal,anomaly:v.anom})));
-$('frame').max=frames.length-1;$('frame').disabled=false;$('frame').value=0;$('framecount').textContent=frames.length+' daily frames';['play','prev','next','csv'].forEach(id=>$(id).disabled=false);$('count').textContent=pts.length+' sample locations';buildMarkers();updateAnalytics();showFrame(0);setStatus('Loaded '+frames.length+' daily frames across '+pts.length+' sample locations. Baseline: 1991–2020 calendar-day means.');}
-catch(e){setStatus('Could not load climate data: '+e.message+'. Check your internet connection or try again later.',true)}finally{$('load').disabled=false}}
+function yearChunks(){
+  const chunks=[];
+  for(let y=1991;y<=2020;y+=5){
+    const last=Math.min(y+4,2020);
+    chunks.push([y+'-01-01',last+'-12-31']);
+  }
+  return chunks;
+}
+async function buildBaseline(){
+  try{
+    const cached=localStorage.getItem(BASELINE_CACHE_KEY);
+    if(cached){
+      const parsed=JSON.parse(cached);
+      if(Array.isArray(parsed)&&parsed.length===pts.length&&parsed.every(x=>x&&Object.keys(x).length>=365)){
+        setStatus('Using the saved 1991–2020 ERA5-Land baseline. Retrieving selected-season data…');
+        return parsed;
+      }
+    }
+  }catch(e){console.warn('Baseline cache could not be read:',e)}
+  const normals=Array.from({length:pts.length},()=>({}));
+  const chunks=yearChunks(),groups=[];
+  for(let p=0;p<pts.length;p+=5)groups.push({start:p,locations:pts.slice(p,p+5)});
+  const jobs=[];
+  groups.forEach(group=>chunks.forEach(chunk=>jobs.push({group,chunk})));
+  let completed=0,next=0;
+  async function worker(){
+    while(true){
+      const jobIndex=next++;
+      if(jobIndex>=jobs.length)return;
+      const job=jobs[jobIndex];
+      const data=asLocations(await getJSON(apiUrl(job.chunk[0],job.chunk[1],job.group.locations)));
+      if(data.length!==job.group.locations.length)throw new Error('Baseline batch returned '+data.length+' locations; expected '+job.group.locations.length+'.');
+      data.forEach((loc,localIndex)=>{
+        if(!loc.daily||!Array.isArray(loc.daily.time)||!Array.isArray(loc.daily.temperature_2m_max))throw new Error('The API returned an incomplete baseline batch.');
+        const target=normals[job.group.start+localIndex];
+        loc.daily.time.forEach((date,i)=>{
+          const value=loc.daily.temperature_2m_max[i];
+          if(!Number.isFinite(value))return;
+          const key=date.slice(5),entry=target[key]||(target[key]={sum:0,count:0});
+          entry.sum+=value;entry.count++;
+        });
+      });
+      completed++;
+      setStatus('Building the 1991–2020 baseline: '+completed+' of '+jobs.length+' small requests completed. This first run may take a few minutes…');
+      await sleep(1200);
+    }
+  }
+  await Promise.all([worker(),worker()]);
+  const result=normals.map(point=>{
+    const out={};
+    Object.keys(point).forEach(key=>{if(point[key].count)out[key]=point[key].sum/point[key].count});
+    return out;
+  });
+  if(result.some(point=>Object.keys(point).length<365))throw new Error('The baseline is incomplete for one or more sample locations. Please retry.');
+  try{localStorage.setItem(BASELINE_CACHE_KEY,JSON.stringify(result));}
+  catch(e){console.warn('Could not save baseline cache:',e)}
+  return result;
+}
+async function loadSeason(){
+  if($('load').disabled)return;
+  stopPlay();$('load').disabled=true;
+  $('csv').disabled=true;
+  setStatus('Preparing ERA5-Land data. The 30-year baseline is split into small requests to avoid API limits…');
+  frames=[];rawRows=[];markers.forEach(m=>map.removeLayer(m));markers=[];
+  $('frame').disabled=true;['play','prev','next'].forEach(id=>$(id).disabled=true);
+  const year=Number($('year').value),dates=dateRange(year);
+  try{
+    const normals=await buildBaseline();
+    setStatus('Baseline ready. Retrieving daily temperatures for the '+year+' rainy season…');
+    const seasonData=asLocations(await getJSON(apiUrl(dates[0],dates[dates.length-1])));
+    if(seasonData.length!==pts.length)throw new Error('Season request returned '+seasonData.length+' locations; expected '+pts.length+'.');
+    for(let p=0;p<seasonData.length;p++){
+      if(!seasonData[p].daily||!Array.isArray(seasonData[p].daily.time))throw new Error('Season data are incomplete for sample location '+(p+1)+'.');
+    }
+    for(let i=0;i<dates.length;i++){
+      const vals=[];
+      for(let p=0;p<pts.length;p++){
+        const daily=seasonData[p].daily,ix=daily.time.indexOf(dates[i]);
+        const actual=ix>=0?daily.temperature_2m_max[ix]:null;
+        const normal=normals[p][dates[i].slice(5)];
+        vals.push({actual,normal,anom:Number.isFinite(actual)&&Number.isFinite(normal)?actual-normal:null});
+      }
+      frames.push({date:dates[i],vals});
+    }
+    rawRows=[];
+    frames.forEach(f=>f.vals.forEach((v,i)=>rawRows.push({date:f.date,latitude:pts[i].lat,longitude:pts[i].lon,tmax:v.actual,normal:v.normal,anomaly:v.anom})));
+    $('frame').max=frames.length-1;$('frame').disabled=false;$('frame').value=0;
+    $('framecount').textContent=frames.length+' daily frames';
+    ['play','prev','next','csv'].forEach(id=>$(id).disabled=false);
+    $('count').textContent=pts.length+' sample locations';
+    buildMarkers();updateAnalytics();showFrame(0);
+    setStatus('Loaded '+frames.length+' daily frames across '+pts.length+' sample locations. Baseline: 1991–2020 calendar-day means. This baseline is cached in this browser for future visits.');
+  }catch(e){
+    console.error(e);
+    setStatus('Could not load climate data: '+e.message+'. Wait briefly and retry. If this is the first run, keep this page open while the 1991–2020 baseline is assembled.',true);
+  }finally{$('load').disabled=false}
+}
 function color(v){return v===null?'#8493a2':Math.abs(v)<.2?'#aab7c4':v>0?'#ff925f':'#5da9ff'}
 function towerIcon(v){let h=Math.max(8,Math.min(100,Math.abs(v||0)*13+8));let c=color(v);return L.divIcon({className:'tower-icon',html:'<div class="tower" style="--h:'+h+'px;--c:'+c+'"><i class="front"></i><i class="side"></i><i class="cap"></i></div>',iconSize:[22,h],iconAnchor:[10,h]})}
 function buildMarkers(){markers=pts.map((p,i)=>{let m=L.marker([p.lat,p.lon],{icon:towerIcon(null)}).addTo(map);m.bindPopup('Loading location…');return m})}
