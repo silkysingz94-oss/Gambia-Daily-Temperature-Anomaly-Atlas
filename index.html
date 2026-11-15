@@ -1,197 +1,888 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <title>GBoS GEOAI | Gambia Daily Temperature Anomaly Atlas</title>
-<link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+
 <style>
-:root{--bg:#08111b;--panel:#101d2a;--panel2:#142536;--line:#26394a;--muted:#8da2b5;--text:#edf5fb;--cyan:#50d5d0;--orange:#ff925f;--blue:#5da9ff}
-*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:Manrope,Arial,sans-serif}header{padding:18px 24px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:16px;background:#0b1723} .brand{display:flex;align-items:center;gap:12px}.mark{width:42px;height:42px;border:1px solid #397c82;border-radius:12px;display:grid;place-items:center;color:var(--cyan);font-weight:800;font-size:19px}.eyebrow,.mono{font-family:"DM Mono",monospace;letter-spacing:.08em;text-transform:uppercase}.eyebrow{font-size:10px;color:var(--cyan)}h1{font-size:18px;margin:3px 0 0;font-weight:800;letter-spacing:-.03em}.header-right{font-size:10px;color:var(--muted);text-align:right;line-height:1.7}.hero{padding:24px 26px 18px;background:radial-gradient(ellipse at 70% 0%,#16364a 0%,transparent 50%),#0b1723;border-bottom:1px solid var(--line)}.hero h2{font-size:clamp(24px,3vw,38px);margin:7px 0 8px;letter-spacing:-.05em;line-height:1.08}.hero p{color:#a8bac9;max-width:850px;line-height:1.65;margin:0;font-size:13px}.season-pill{display:inline-flex;padding:6px 10px;border:1px solid #31596a;border-radius:99px;color:#b5eeea;font:10px "DM Mono";margin-top:14px}.layout{display:grid;grid-template-columns:260px minmax(400px,1fr) 300px;gap:12px;padding:14px;min-height:calc(100vh - 220px)}.panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;overflow:hidden;min-width:0}.panel-head{padding:14px 15px;border-bottom:1px solid var(--line);font:10px "DM Mono";letter-spacing:.1em;color:var(--cyan);text-transform:uppercase}.panel-body{padding:14px}.field{margin-bottom:15px}.field label{display:block;font-size:10px;color:var(--muted);margin-bottom:7px}.field select,.field input{width:100%;background:#0a1621;border:1px solid #304457;color:var(--text);padding:10px;border-radius:8px;font:12px Manrope}.btnrow{display:flex;gap:7px;flex-wrap:wrap}.btn{background:#173144;border:1px solid #31566c;color:#dff7f6;padding:9px 11px;border-radius:8px;font:11px Manrope;font-weight:700;cursor:pointer}.btn.primary{background:#126b6d;border-color:#2b9996}.btn:disabled{opacity:.45;cursor:not-allowed}.hint{font-size:10px;color:var(--muted);line-height:1.55;margin-top:10px}.status{padding:10px;background:#0a1722;border:1px solid #263c4e;border-radius:8px;color:#a9c0d0;font-size:10px;line-height:1.5;margin-top:12px}.status.error{color:#ffb0a2;border-color:#78473f}.legend{display:flex;gap:12px;flex-wrap:wrap;font-size:10px;color:var(--muted);padding:11px 14px;border-bottom:1px solid var(--line)}.dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px}.mapwrap{position:relative;height:560px;min-height:420px}#map{height:100%;width:100%;background:#0c1b27}.map-caption{position:absolute;z-index:500;left:12px;top:12px;background:#08131de8;border:1px solid #395265;border-radius:8px;padding:8px 10px;font:10px "DM Mono";pointer-events:none}.timeline{padding:13px 15px;border-top:1px solid var(--line)}.timeline-top{display:flex;justify-content:space-between;gap:8px;align-items:center;margin-bottom:10px}.datebig{font:15px "DM Mono";color:#fff}.anom{font:22px "DM Mono";font-weight:500}.timeline input{width:100%;accent-color:var(--cyan)}.playrow{display:flex;gap:8px;align-items:center;margin-top:9px}.playrow select{background:#0a1621;color:#dbe8f0;border:1px solid #304457;padding:7px;border-radius:7px;font-size:10px}.kpis{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}.kpi{background:#0b1824;border:1px solid #263c4e;border-radius:10px;padding:11px}.kpi span{display:block;color:var(--muted);font-size:9px;line-height:1.4}.kpi strong{display:block;font:19px "DM Mono";margin-top:6px}.chartbox{height:180px;margin:12px 0 18px}.section-title{font:10px "DM Mono";color:var(--cyan);text-transform:uppercase;letter-spacing:.1em;margin:16px 0 9px}.insight{font-size:11px;color:#b3c3d0;line-height:1.6;padding:10px;border-left:2px solid #3a8c8d;background:#0c1a26;margin-bottom:8px}.foot{padding:16px 22px;color:#8095a7;font-size:10px;border-top:1px solid var(--line);line-height:1.7}.tower-icon{background:transparent;border:0}.tower{position:relative;width:20px;height:var(--h);min-height:8px;transform:translateY(0);filter:drop-shadow(2px 3px 2px #0008)}.tower .front{position:absolute;bottom:0;left:3px;width:12px;height:100%;background:var(--c);border:1px solid #ffffff88;transform:skewY(-8deg);transform-origin:bottom}.tower .side{position:absolute;bottom:0;left:15px;width:5px;height:100%;background:color-mix(in srgb,var(--c),#07111b 35%);transform:skewY(-8deg)}.tower .cap{position:absolute;top:0;left:3px;width:17px;height:5px;background:color-mix(in srgb,var(--c),white 30%);transform:skewY(-18deg)}.leaflet-popup-content-wrapper,.leaflet-popup-tip{background:#102131;color:#edf5fb}.leaflet-popup-content{font:11px Manrope}.popup-title{font-weight:800;margin-bottom:5px}.popup-val{font:18px "DM Mono";color:#fff}.leaflet-control-layers{background:#102131!important;color:#fff!important;border:1px solid #395265!important}.leaflet-control-attribution{background:#0b1723cc!important;color:#a9bac8!important}.leaflet-control-attribution a{color:#65c9c7!important}
-@media(max-width:1100px){.layout{grid-template-columns:230px minmax(300px,1fr)}.analytics{grid-column:1/-1}.analytics .panel-body{display:grid;grid-template-columns:1fr 1fr;gap:14px}.analytics .section-title{grid-column:1/-1}}
-@media(max-width:760px){header{padding:14px}.header-right{display:none}.layout{display:flex;flex-direction:column;padding:9px}.mapwrap{height:480px}.analytics .panel-body{display:block}.hero{padding:20px 16px}.hero p{font-size:12px}}
-</style></head>
+:root{
+ --bg:#08111b;--panel:#101d2a;--panel2:#142536;
+ --line:#26394a;--muted:#8da2b5;--text:#edf5fb;
+ --cyan:#50d5d0;--orange:#ff925f;--blue:#5da9ff;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:Manrope,Arial,sans-serif}
+header{padding:18px 24px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:16px;background:#0b1723}
+.brand{display:flex;align-items:center;gap:12px}
+.mark{width:42px;height:42px;border:1px solid #397c82;border-radius:12px;display:grid;place-items:center;color:var(--cyan);font-weight:800;font-size:19px}
+.eyebrow,.mono{font-family:"DM Mono",monospace;letter-spacing:.08em;text-transform:uppercase}
+.eyebrow{font-size:10px;color:var(--cyan)}
+h1{font-size:18px;margin:3px 0 0;font-weight:800;letter-spacing:-.03em}
+.header-right{font-size:10px;color:var(--muted);text-align:right;line-height:1.7}
+.hero{padding:24px 26px 18px;background:radial-gradient(ellipse at 70% 0%,#16364a 0%,transparent 50%),#0b1723;border-bottom:1px solid var(--line)}
+.hero h2{font-size:clamp(24px,3vw,38px);margin:7px 0 8px;letter-spacing:-.05em;line-height:1.08}
+.hero p{color:#a8bac9;max-width:850px;line-height:1.65;margin:0;font-size:13px}
+.season-pill{display:inline-flex;padding:6px 10px;border:1px solid #31596a;border-radius:99px;color:#b5eeea;font:10px "DM Mono";margin-top:14px}
+.layout{display:grid;grid-template-columns:260px minmax(400px,1fr) 300px;gap:12px;padding:14px;min-height:calc(100vh - 220px)}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;overflow:hidden;min-width:0}
+.panel-head{padding:14px 15px;border-bottom:1px solid var(--line);font:10px "DM Mono";letter-spacing:.1em;color:var(--cyan);text-transform:uppercase}
+.panel-body{padding:14px}
+.field{margin-bottom:15px}
+.field label{display:block;font-size:10px;color:var(--muted);margin-bottom:7px}
+.field select,.field input{width:100%;background:#0a1621;border:1px solid #304457;color:var(--text);padding:10px;border-radius:8px;font:12px Manrope}
+.btnrow{display:flex;gap:7px;flex-wrap:wrap}
+.btn{background:#173144;border:1px solid #31566c;color:#dff7f6;padding:9px 11px;border-radius:8px;font:11px Manrope;font-weight:700;cursor:pointer}
+.btn.primary{background:#126b6d;border-color:#2b9996}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.hint{font-size:10px;color:var(--muted);line-height:1.55;margin-top:10px}
+.status{padding:10px;background:#0a1722;border:1px solid #263c4e;border-radius:8px;color:#a9c0d0;font-size:10px;line-height:1.5;margin-top:12px}
+.status.error{color:#ffb0a2;border-color:#78473f}
+.legend{display:flex;gap:12px;flex-wrap:wrap;font-size:10px;color:var(--muted);padding:11px 14px;border-bottom:1px solid var(--line)}
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px}
+.mapwrap{position:relative;height:560px;min-height:420px}
+#map{height:100%;width:100%;background:#0c1b27}
+.map-caption{position:absolute;z-index:500;left:12px;top:12px;background:#08131de8;border:1px solid #395265;border-radius:8px;padding:8px 10px;font:10px "DM Mono";pointer-events:none;line-height:1.7}
+.map-motion{position:absolute;z-index:500;right:12px;top:12px;background:#08131de8;border:1px solid #395265;border-radius:8px;padding:9px 11px;font:10px "DM Mono";pointer-events:none;line-height:1.7;text-align:right}
+.motion-live{color:var(--cyan)}
+.timeline{padding:13px 15px;border-top:1px solid var(--line)}
+.timeline-top{display:flex;justify-content:space-between;gap:8px;align-items:center;margin-bottom:10px}
+.datebig{font:15px "DM Mono";color:#fff}
+.anom{font:22px "DM Mono";font-weight:500}
+.timeline input{width:100%;accent-color:var(--cyan)}
+.playrow{display:flex;gap:8px;align-items:center;margin-top:9px;flex-wrap:wrap}
+.playrow select{background:#0a1621;color:#dbe8f0;border:1px solid #304457;padding:7px;border-radius:7px;font-size:10px}
+.kpis{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
+.kpi{background:#0b1824;border:1px solid #263c4e;border-radius:10px;padding:11px}
+.kpi span{display:block;color:var(--muted);font-size:9px;line-height:1.4}
+.kpi strong{display:block;font:19px "DM Mono";margin-top:6px}
+.chartbox{height:180px;margin:12px 0 18px}
+.section-title{font:10px "DM Mono";color:var(--cyan);text-transform:uppercase;letter-spacing:.1em;margin:16px 0 9px}
+.insight{font-size:11px;color:#b3c3d0;line-height:1.6;padding:10px;border-left:2px solid #3a8c8d;background:#0c1a26;margin-bottom:8px}
+.foot{padding:16px 22px;color:#8095a7;font-size:10px;border-top:1px solid var(--line);line-height:1.7}
+.tower-icon{background:transparent;border:0}
+.tower{position:relative;width:20px;height:var(--h);min-height:8px;filter:drop-shadow(2px 3px 2px #0008)}
+.tower .front{position:absolute;bottom:0;left:3px;width:12px;height:100%;background:var(--c);border:1px solid #ffffff88;transform:skewY(-8deg);transform-origin:bottom}
+.tower .side{position:absolute;bottom:0;left:15px;width:5px;height:100%;background:color-mix(in srgb,var(--c),#07111b 35%);transform:skewY(-8deg)}
+.tower .cap{position:absolute;top:0;left:3px;width:17px;height:5px;background:color-mix(in srgb,var(--c),white 30%);transform:skewY(-18deg)}
+.leaflet-popup-content-wrapper,.leaflet-popup-tip{background:#102131;color:#edf5fb}
+.leaflet-popup-content{font:11px Manrope}
+.popup-title{font-weight:800;margin-bottom:5px}
+.popup-val{font:18px "DM Mono";color:#fff}
+.leaflet-control-layers{background:#102131!important;color:#fff!important;border:1px solid #395265!important}
+.leaflet-control-attribution{background:#0b1723cc!important;color:#a9bac8!important}
+.leaflet-control-attribution a{color:#65c9c7!important}
+
+/* Animated spatial scan */
+.scan-icon{background:transparent;border:0}
+.scan-marker{
+ width:22px;height:22px;border-radius:50%;
+ background:#50d5d0;border:3px solid white;
+ box-shadow:0 0 0 5px #50d5d044,0 0 18px #50d5d0;
+ animation:scanPulse 1.15s infinite;
+}
+@keyframes scanPulse{
+ 0%{box-shadow:0 0 0 3px #50d5d055,0 0 12px #50d5d0}
+ 70%{box-shadow:0 0 0 13px #50d5d000,0 0 22px #50d5d0}
+ 100%{box-shadow:0 0 0 3px #50d5d000,0 0 12px #50d5d0}
+}
+.scan-number{
+ background:#08131d;border:1px solid #50d5d0;color:#50d5d0;
+ border-radius:5px;padding:3px 6px;font:10px "DM Mono";
+ white-space:nowrap;
+}
+@media(max-width:1100px){
+ .layout{grid-template-columns:230px minmax(300px,1fr)}
+ .analytics{grid-column:1/-1}
+ .analytics .panel-body{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+ .analytics .section-title{grid-column:1/-1}
+}
+@media(max-width:760px){
+ header{padding:14px}.header-right{display:none}
+ .layout{display:flex;flex-direction:column;padding:9px}
+ .mapwrap{height:480px}.analytics .panel-body{display:block}
+ .hero{padding:20px 16px}.hero p{font-size:12px}
+}
+</style>
+</head>
+
 <body>
-<header><div class="brand"><div class="mark">G</div><div><div class="eyebrow">SILKYSINGZ GEOAI / GBoS</div><h1>GAMBIA DAILY TEMPERATURE ANOMALY ATLAS</h1></div></div><div class="header-right">GIS / CARTOGRAPHY UNIT<br>DAILY CLIMATE INTELLIGENCE • 2026</div></header>
-<section class="hero"><div class="eyebrow">SPATIAL CLIMATE STORYTELLING / ERA5-LAND REANALYSIS</div><h2>One season. Every day.<br><span style="color:var(--cyan)">A different temperature story.</span></h2><p>Explore how daily maximum temperatures across The Gambia departed from their calendar-day 1991–2020 reference. Each vertical tower represents a sampled location: orange rises above the normal, blue falls below it. Animate the season to reveal patterns that a single seasonal average can hide.</p><div class="season-pill">🇬🇲 THE GAMBIA &nbsp;•&nbsp; RAINY SEASON 2026 &nbsp;•&nbsp; 01 JUN — 10 OCT</div></section>
+<header>
+ <div class="brand">
+  <div class="mark">G</div>
+  <div>
+   <div class="eyebrow">SILKYSINGZ GEOAI / GBoS</div>
+   <h1>GAMBIA DAILY TEMPERATURE ANOMALY ATLAS</h1>
+  </div>
+ </div>
+ <div class="header-right">GIS / CARTOGRAPHY UNIT<br>DAILY CLIMATE INTELLIGENCE • 2026</div>
+</header>
+
+<section class="hero">
+ <div class="eyebrow">SPATIAL CLIMATE STORYTELLING / ERA5-LAND REANALYSIS</div>
+ <h2>One season. Every day.<br><span style="color:var(--cyan)">A different temperature story.</span></h2>
+ <p>Explore how daily maximum temperatures across The Gambia departed from their calendar-day 1991–2020 reference. Animate the season and watch the spatial scan move across the sampling network as each day's temperature anomaly changes.</p>
+ <div class="season-pill">🇬🇲 THE GAMBIA &nbsp;•&nbsp; RAINY SEASON 2026 &nbsp;•&nbsp; 01 JUN — 10 OCT</div>
+</section>
+
 <div class="layout">
-<aside class="panel"><div class="panel-head">01 / Control centre</div><div class="panel-body">
-<div class="field"><label>ANALYSIS SEASON</label><select id="year"><option value="2026" selected>2026 rainy season</option><option value="2025">2025 rainy season</option></select></div>
-<div class="field"><label>REFERENCE PERIOD</label><select disabled><option>1991–2020 climate normal</option></select></div>
-<div class="field"><label>ANOMALY VARIABLE</label><select disabled><option>Daily maximum 2 m temperature (°C)</option></select></div>
-<div class="field"><label>MAP BASEMAP</label><select id="base"><option value="dark">Dark canvas</option><option value="street">Street map</option><option value="sat">Satellite</option><option value="terrain">Terrain</option></select></div>
-<div class="btnrow"><button class="btn primary" id="load">LOAD SEASON DATA</button><button class="btn" id="reset">RESET</button></div>
-<div class="status" id="status">Ready. Load the selected season to retrieve ERA5-Land daily maximum temperature and calculate day-specific anomalies.</div>
-<div class="section-title">READ THE TOWERS</div><div class="hint">Tower height is proportional to the absolute temperature anomaly. Orange = warmer than the 1991–2020 calendar-day normal. Blue = cooler than normal. Neutral values are shown in grey.</div>
-<div class="section-title">SPATIAL SAMPLING</div><div class="hint">Thirty fixed sample points are distributed west–east and north–south across the country. Values are model-grid samples, not station observations or a continuous high-resolution surface.</div>
-<div class="section-title">DATA SOURCES</div><div class="hint">ERA5-Land reanalysis accessed through the Open-Meteo Historical Weather API. Baseline is calculated from 30 years of daily maximum temperature (1991–2020), grouped by month and day. Modelled data may differ from GMet station observations.</div>
-</div></aside>
-<main class="panel"><div class="panel-head">02 / Interactive map — daily anomaly towers</div><div class="legend"><span><i class="dot" style="background:#ff925f"></i>Above normal</span><span><i class="dot" style="background:#5da9ff"></i>Below normal</span><span><i class="dot" style="background:#aab7c4"></i>Near normal (±0.2°C)</span><span id="count" style="margin-left:auto">0 / 30 locations</span></div><div class="mapwrap"><div id="map"></div><div class="map-caption" id="mapdate">WAITING FOR DATA</div></div><div class="timeline"><div class="timeline-top"><span class="datebig" id="dateLabel">—</span><span class="anom" id="meanLabel">—</span></div><input type="range" id="frame" min="0" max="0" value="0" disabled><div class="playrow"><button class="btn primary" id="play" disabled>▶ PLAY</button><button class="btn" id="prev" disabled>◀</button><button class="btn" id="next" disabled>▶</button><select id="speed"><option value="900">1× speed</option><option value="500">2× speed</option><option value="250">4× speed</option></select><span class="hint" id="framecount" style="margin:0 0 0 auto">0 frames</span></div></div></main>
-<aside class="panel analytics"><div class="panel-head">03 / Season analytics</div><div class="panel-body"><div class="kpis"><div class="kpi"><span>SEASON MEAN ANOMALY</span><strong id="kMean">—</strong></div><div class="kpi"><span>WARMER-THAN-NORMAL DAYS</span><strong id="kWarm">—</strong></div><div class="kpi"><span>COOLEST DAILY MEAN</span><strong id="kCool">—</strong></div><div class="kpi"><span>WARMEST DAILY MEAN</span><strong id="kHot">—</strong></div></div><div class="section-title">COUNTRY MEAN / DAILY ANOMALY</div><div class="chartbox"><canvas id="chart"></canvas></div><div class="section-title">WHAT THE DATA SHOWS</div><div id="insights"><div class="insight">Load a season to calculate national daily summaries and identify the strongest warm and cool departures.</div></div><div class="section-title">EXPORT</div><div class="btnrow"><button class="btn" id="csv" disabled>DOWNLOAD DAILY CSV</button></div><div class="hint">CSV includes date, sample-point coordinates, daily maximum temperature, calendar-day normal and anomaly.</div></div></aside>
+
+<aside class="panel">
+ <div class="panel-head">01 / Control centre</div>
+ <div class="panel-body">
+
+  <div class="field">
+   <label>ANALYSIS SEASON</label>
+   <select id="year">
+    <option value="2026" selected>2026 rainy season</option>
+    <option value="2025">2025 rainy season</option>
+   </select>
+  </div>
+
+  <div class="field">
+   <label>REFERENCE PERIOD</label>
+   <select disabled><option>1991–2020 climate normal</option></select>
+  </div>
+
+  <div class="field">
+   <label>ANOMALY VARIABLE</label>
+   <select disabled><option>Daily maximum 2 m temperature (°C)</option></select>
+  </div>
+
+  <div class="field">
+   <label>MAP BASEMAP</label>
+   <select id="base">
+    <option value="dark">Dark canvas</option>
+    <option value="street">Street map</option>
+    <option value="sat">Satellite</option>
+    <option value="terrain">Terrain</option>
+   </select>
+  </div>
+
+  <div class="btnrow">
+   <button class="btn primary" id="load">LOAD SEASON DATA</button>
+   <button class="btn" id="reset">RESET</button>
+  </div>
+
+  <div class="status" id="status">Ready. Load a season to retrieve ERA5-Land daily maximum temperature and calculate daily anomalies.</div>
+
+  <div class="section-title">SPATIAL MOVEMENT</div>
+  <div class="hint">The cyan marker travels through the 30 sample locations. The illuminated trail shows the sequence already scanned. This is a visual spatial scan, not a measured wind or air-mass trajectory.</div>
+
+  <div class="section-title">READ THE TOWERS</div>
+  <div class="hint">Tower height represents the absolute temperature anomaly. Orange = warmer than normal. Blue = cooler than normal. Grey = near normal (±0.2°C).</div>
+
+  <div class="section-title">SPATIAL SAMPLING</div>
+  <div class="hint">Thirty fixed sample points are distributed across the country. Values are model-grid samples, not station observations or a continuous high-resolution surface.</div>
+
+  <div class="section-title">DATA SOURCES</div>
+  <div class="hint">ERA5-Land reanalysis accessed through the Open-Meteo Historical Weather API. Baseline: 1991–2020 calendar-day means. Modelled data may differ from GMet station observations.</div>
+ </div>
+</aside>
+
+<main class="panel">
+ <div class="panel-head">02 / Interactive map — animated spatial anomaly scan</div>
+
+ <div class="legend">
+  <span><i class="dot" style="background:#ff925f"></i>Above normal</span>
+  <span><i class="dot" style="background:#5da9ff"></i>Below normal</span>
+  <span><i class="dot" style="background:#aab7c4"></i>Near normal</span>
+  <span><i class="dot" style="background:#50d5d0"></i>Moving scan marker</span>
+  <span id="count" style="margin-left:auto">0 / 30 locations</span>
+ </div>
+
+ <div class="mapwrap">
+  <div id="map"></div>
+  <div class="map-caption" id="mapdate">WAITING FOR DATA</div>
+  <div class="map-motion">
+   <div class="motion-live">● SPATIAL SCAN</div>
+   <div id="motionPoint">LOCATION — / 30</div>
+   <div id="motionValue">WAITING</div>
+  </div>
+ </div>
+
+ <div class="timeline">
+  <div class="timeline-top">
+   <span class="datebig" id="dateLabel">—</span>
+   <span class="anom" id="meanLabel">—</span>
+  </div>
+
+  <input type="range" id="frame" min="0" max="0" value="0" disabled>
+
+  <div class="playrow">
+   <button class="btn primary" id="play" disabled>▶ PLAY</button>
+   <button class="btn" id="prev" disabled>◀</button>
+   <button class="btn" id="next" disabled>▶</button>
+   <select id="speed">
+    <option value="900">1× speed</option>
+    <option value="500">2× speed</option>
+    <option value="250">4× speed</option>
+   </select>
+   <span class="hint" id="framecount" style="margin:0 0 0 auto">0 frames</span>
+  </div>
+ </div>
+</main>
+
+<aside class="panel analytics">
+ <div class="panel-head">03 / Season analytics</div>
+ <div class="panel-body">
+
+  <div class="kpis">
+   <div class="kpi"><span>SEASON MEAN ANOMALY</span><strong id="kMean">—</strong></div>
+   <div class="kpi"><span>WARMER-THAN-NORMAL DAYS</span><strong id="kWarm">—</strong></div>
+   <div class="kpi"><span>COOLEST DAILY MEAN</span><strong id="kCool">—</strong></div>
+   <div class="kpi"><span>WARMEST DAILY MEAN</span><strong id="kHot">—</strong></div>
+  </div>
+
+  <div class="section-title">COUNTRY MEAN / DAILY ANOMALY</div>
+  <div class="chartbox"><canvas id="chart"></canvas></div>
+
+  <div class="section-title">WHAT THE DATA SHOWS</div>
+  <div id="insights">
+   <div class="insight">Load a season to calculate national daily summaries.</div>
+  </div>
+
+  <div class="section-title">EXPORT</div>
+  <div class="btnrow">
+   <button class="btn" id="csv" disabled>DOWNLOAD DAILY CSV</button>
+  </div>
+  <div class="hint">CSV includes date, sample-point coordinates, daily maximum temperature, calendar-day normal and anomaly.</div>
+ </div>
+</aside>
 </div>
-<div class="foot">Produced by Ansu Singhateh | GIS Analyst | GIS / Cartography Unit | Gambia Bureau of Statistics (GBoS)<br>GBoS GEOAI • Research and educational use. Climate data: Copernicus Climate Change Service (C3S) ERA5-Land, accessed via Open-Meteo. Open-Meteo Historical Weather API documentation: https://open-meteo.com/en/docs/historical-weather-api. Baseline method: 1991–2020 calendar-day mean of daily maximum 2 m air temperature. This is a model-based spatial screening and communication product, not an official GMet bulletin.</div>
+
+<div class="foot">
+ Produced by Ansu Singhateh | GIS Analyst | GIS / Cartography Unit | Gambia Bureau of Statistics (GBoS)<br>
+ GBoS GEOAI • Research and educational use. Climate data: Copernicus Climate Change Service (C3S) ERA5-Land, accessed via Open-Meteo. Baseline method: 1991–2020 calendar-day mean of daily maximum 2 m air temperature. The moving map marker is a visual sampling sequence, not observed atmospheric movement. This is a model-based spatial screening and communication product, not an official GMet bulletin.
+</div>
+
 <script>
-const pts=[];[13.04,13.20,13.36,13.52,13.68,13.82].forEach(lat=>[-16.62,-16.08,-15.54,-15.00,-14.46].forEach(lon=>pts.push({lat,lon})));
-const $=id=>document.getElementById(id);let map,baseLayers={},markers=[],frames=[],chart=null,playTimer=null,active=0,rawRows=[];
-function initMap(){map=L.map('map',{zoomControl:true,preferCanvas:true}).setView([13.45,-15.35],8);baseLayers.dark=L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{attribution:'© OpenStreetMap © CARTO'});baseLayers.street=L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap'});baseLayers.sat=L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{attribution:'Tiles © Esri'});baseLayers.terrain=L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',{attribution:'© OpenTopoMap'});baseLayers.dark.addTo(map);L.control.scale({imperial:false}).addTo(map);}
-function setStatus(t,err=false){$('status').textContent=t;$('status').className='status'+(err?' error':'')}
-$('base').onchange=()=>{Object.values(baseLayers).forEach(l=>map.removeLayer(l));baseLayers[$('base').value].addTo(map)};
-function iso(d){return d.toISOString().slice(0,10)}function dateRange(y){let a=new Date(Date.UTC(y,5,1)),b=new Date(Date.UTC(y,9,10)),out=[];for(let d=a;d<=b;d.setUTCDate(d.getUTCDate()+1))out.push(iso(d));return out}
+/* -------------------------------------------------------
+   1. SAMPLE LOCATIONS
+------------------------------------------------------- */
+const pts=[];
+[13.04,13.20,13.36,13.52,13.68,13.82].forEach((lat,row)=>{
+ let lons=[-16.62,-16.08,-15.54,-15.00,-14.46];
+ if(row%2===1)lons.reverse();
+ lons.forEach(lon=>pts.push({lat,lon}));
+});
+
+const $=id=>document.getElementById(id);
+
+let map,baseLayers={},markers=[],frames=[],chart=null;
+let playTimer=null,scanTimer=null,active=0,rawRows=[];
+let routeLine=null,trailLine=null,scanMarker=null;
+let scanIndex=0,scanCoords=[],scanTrail=[];
+let loading=false;
+
+/* -------------------------------------------------------
+   2. MAP INITIALISATION
+------------------------------------------------------- */
+function initMap(){
+ map=L.map('map',{zoomControl:true,preferCanvas:true}).setView([13.45,-15.35],8);
+
+ baseLayers.dark=L.tileLayer(
+  'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+  {attribution:'© OpenStreetMap © CARTO'}
+ );
+
+ baseLayers.street=L.tileLayer(
+  'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+  {attribution:'© OpenStreetMap'}
+ );
+
+ baseLayers.sat=L.tileLayer(
+  'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+  {attribution:'Tiles © Esri'}
+ );
+
+ baseLayers.terrain=L.tileLayer(
+  'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',
+  {attribution:'© OpenTopoMap'}
+ );
+
+ baseLayers.dark.addTo(map);
+ L.control.scale({imperial:false}).addTo(map);
+}
+
+$('base').onchange=()=>{
+ Object.values(baseLayers).forEach(l=>map.removeLayer(l));
+ baseLayers[$('base').value].addTo(map);
+};
+
+/* -------------------------------------------------------
+   3. DATE AND API HELPERS
+------------------------------------------------------- */
+function iso(d){return d.toISOString().slice(0,10)}
+
+function dateRange(y){
+ let a=new Date(Date.UTC(y,5,1));
+ let b=new Date(Date.UTC(y,9,10));
+ let out=[];
+ for(let d=a;d<=b;d.setUTCDate(d.getUTCDate()+1))out.push(iso(d));
+ return out;
+}
+
 function apiUrl(start,end,locations=pts){
-  const lat=locations.map(p=>p.lat).join(','),lon=locations.map(p=>p.lon).join(',');
-  return 'https://archive-api.open-meteo.com/v1/archive?latitude='+lat+'&longitude='+lon+'&start_date='+start+'&end_date='+end+'&daily=temperature_2m_max&timezone=Africa%2FBanjul&models=era5_land&temperature_unit=celsius';
+ const lat=locations.map(p=>p.lat).join(',');
+ const lon=locations.map(p=>p.lon).join(',');
+ return 'https://archive-api.open-meteo.com/v1/archive?latitude='+lat+
+ '&longitude='+lon+
+ '&start_date='+start+
+ '&end_date='+end+
+ '&daily=temperature_2m_max&timezone=Africa%2FBanjul&models=era5_land&temperature_unit=celsius';
 }
-const BASELINE_CACHE_KEY='gbos_era5land_tmax_normals_1991_2020_v2';
-const sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms));
-async function getJSON(url,maxRetries=5){
-  let lastError;
-  for(let attempt=0;attempt<=maxRetries;attempt++){
-    try{
-      const response=await fetch(url,{headers:{'Accept':'application/json'}});
-      if(response.ok){
-        const data=await response.json();
-        if(data&&data.error)throw new Error(data.reason||'Weather API returned an error.');
-        return data;
-      }
-      const retryable=[429,500,502,503,504].includes(response.status);
-      if(!retryable||attempt===maxRetries)throw new Error('Weather API returned HTTP '+response.status+(response.status===429?' (rate limit)':''));
-      const retryAfter=Number(response.headers.get('Retry-After'));
-      const wait=Number.isFinite(retryAfter)&&retryAfter>0?Math.min(retryAfter*1000,60000):2000*Math.pow(2,attempt);
-      setStatus('Weather service is busy (HTTP '+response.status+'). Retrying in '+Math.ceil(wait/1000)+' seconds…',true);
-      await sleep(wait);
-    }catch(error){
-      lastError=error;
-      if(error.message&&error.message.startsWith('Weather API returned HTTP ')&&!/HTTP (429|500|502|503|504)/.test(error.message))throw error;
-      if(attempt===maxRetries)throw error;
-      const wait=2000*Math.pow(2,attempt);
-      setStatus('Connection interrupted. Retrying in '+Math.ceil(wait/1000)+' seconds…',true);
-      await sleep(wait);
+
+async function getJSON(url,retries=4){
+ let lastError;
+ for(let attempt=0;attempt<=retries;attempt++){
+  try{
+   const response=await fetch(url);
+   if(!response.ok){
+    if([429,500,502,503,504].includes(response.status)&&attempt<retries){
+     const wait=Math.min(30000,2000*Math.pow(2,attempt));
+     await new Promise(resolve=>setTimeout(resolve,wait));
+     continue;
     }
+    throw new Error('Weather API returned HTTP '+response.status);
+   }
+   return await response.json();
+  }catch(error){
+   lastError=error;
+   if(attempt<retries){
+    await new Promise(resolve=>setTimeout(resolve,1500*Math.pow(2,attempt)));
+   }
   }
-  throw lastError||new Error('Unable to retrieve climate data.');
+ }
+ throw lastError||new Error('Unable to retrieve climate data');
 }
+
 function asLocations(j){return Array.isArray(j)?j:[j]}
+
 function makeBaseline(locations){
-  return locations.map(loc=>{
-    const sums={},counts={},d=loc.daily;
-    d.time.forEach((date,i)=>{
-      const key=date.slice(5),value=d.temperature_2m_max[i];
-      if(!Number.isFinite(value))return;
-      sums[key]=(sums[key]||0)+value;counts[key]=(counts[key]||0)+1;
-    });
-    const out={};
-    Object.keys(sums).forEach(k=>out[k]=sums[k]/counts[k]);
-    return out;
+ return locations.map(loc=>{
+  let sums={},counts={},d=loc.daily;
+  d.time.forEach((date,i)=>{
+   let key=date.slice(5);
+   let value=d.temperature_2m_max[i];
+   if(!Number.isFinite(value))return;
+   sums[key]=(sums[key]||0)+value;
+   counts[key]=(counts[key]||0)+1;
   });
+  let out={};
+  Object.keys(sums).forEach(k=>out[k]=sums[k]/counts[k]);
+  return out;
+ });
 }
-function fmt(v){return (v>0?'+':'')+v.toFixed(2)+' °C'}
-function yearChunks(){
-  const chunks=[];
-  for(let y=1991;y<=2020;y+=5){
-    const last=Math.min(y+4,2020);
-    chunks.push([y+'-01-01',last+'-12-31']);
-  }
-  return chunks;
+
+function fmt(v){
+ if(!Number.isFinite(v))return '—';
+ return (v>0?'+':'')+v.toFixed(2)+' °C';
 }
-async function buildBaseline(){
-  try{
-    const cached=localStorage.getItem(BASELINE_CACHE_KEY);
-    if(cached){
-      const parsed=JSON.parse(cached);
-      if(Array.isArray(parsed)&&parsed.length===pts.length&&parsed.every(x=>x&&Object.keys(x).length>=365)){
-        setStatus('Using the saved 1991–2020 ERA5-Land baseline. Retrieving selected-season data…');
-        return parsed;
-      }
-    }
-  }catch(e){console.warn('Baseline cache could not be read:',e)}
-  const normals=Array.from({length:pts.length},()=>({}));
-  const chunks=yearChunks(),groups=[];
-  for(let p=0;p<pts.length;p+=5)groups.push({start:p,locations:pts.slice(p,p+5)});
-  const jobs=[];
-  groups.forEach(group=>chunks.forEach(chunk=>jobs.push({group,chunk})));
-  let completed=0,next=0;
-  async function worker(){
-    while(true){
-      const jobIndex=next++;
-      if(jobIndex>=jobs.length)return;
-      const job=jobs[jobIndex];
-      const data=asLocations(await getJSON(apiUrl(job.chunk[0],job.chunk[1],job.group.locations)));
-      if(data.length!==job.group.locations.length)throw new Error('Baseline batch returned '+data.length+' locations; expected '+job.group.locations.length+'.');
-      data.forEach((loc,localIndex)=>{
-        if(!loc.daily||!Array.isArray(loc.daily.time)||!Array.isArray(loc.daily.temperature_2m_max))throw new Error('The API returned an incomplete baseline batch.');
-        const target=normals[job.group.start+localIndex];
-        loc.daily.time.forEach((date,i)=>{
-          const value=loc.daily.temperature_2m_max[i];
-          if(!Number.isFinite(value))return;
-          const key=date.slice(5),entry=target[key]||(target[key]={sum:0,count:0});
-          entry.sum+=value;entry.count++;
-        });
-      });
-      completed++;
-      setStatus('Building the 1991–2020 baseline: '+completed+' of '+jobs.length+' small requests completed. This first run may take a few minutes…');
-      await sleep(1200);
-    }
-  }
-  await Promise.all([worker(),worker()]);
-  const result=normals.map(point=>{
-    const out={};
-    Object.keys(point).forEach(key=>{if(point[key].count)out[key]=point[key].sum/point[key].count});
-    return out;
-  });
-  if(result.some(point=>Object.keys(point).length<365))throw new Error('The baseline is incomplete for one or more sample locations. Please retry.');
-  try{localStorage.setItem(BASELINE_CACHE_KEY,JSON.stringify(result));}
-  catch(e){console.warn('Could not save baseline cache:',e)}
-  return result;
+
+function setStatus(t,err=false){
+ $('status').textContent=t;
+ $('status').className='status'+(err?' error':'');
 }
+
+/* -------------------------------------------------------
+   4. COLOUR AND TOWER SYMBOLS
+------------------------------------------------------- */
+function color(v){
+ if(v===null||!Number.isFinite(v))return '#8493a2';
+ return Math.abs(v)<.2?'#aab7c4':v>0?'#ff925f':'#5da9ff';
+}
+
+function towerIcon(v){
+ let h=Math.max(8,Math.min(100,Math.abs(v||0)*13+8));
+ let c=color(v);
+ return L.divIcon({
+  className:'tower-icon',
+  html:'<div class="tower" style="--h:'+h+'px;--c:'+c+'"><i class="front"></i><i class="side"></i><i class="cap"></i></div>',
+  iconSize:[22,h],
+  iconAnchor:[10,h]
+ });
+}
+
+/* -------------------------------------------------------
+   5. ANIMATED SPATIAL SCAN
+------------------------------------------------------- */
+function createScan(){
+ scanCoords=pts.map(p=>[p.lat,p.lon]);
+ scanTrail=[];
+
+ if(routeLine)map.removeLayer(routeLine);
+ if(trailLine)map.removeLayer(trailLine);
+ if(scanMarker)map.removeLayer(scanMarker);
+
+ // Full sampling sequence, shown as a subtle dashed guide.
+ routeLine=L.polyline(scanCoords,{
+  color:'#50d5d0',
+  weight:2,
+  opacity:.35,
+  dashArray:'5 8',
+  lineCap:'round'
+ }).addTo(map);
+
+ // The illuminated line grows as the marker advances.
+ trailLine=L.polyline([],{
+  color:'#50d5d0',
+  weight:4,
+  opacity:.95,
+  lineCap:'round',
+  lineJoin:'round'
+ }).addTo(map);
+
+ scanMarker=L.marker(scanCoords[0],{
+  icon:L.divIcon({
+   className:'scan-icon',
+   html:'<div class="scan-marker"></div>',
+   iconSize:[22,22],
+   iconAnchor:[11,11]
+  }),
+  zIndexOffset:2000,
+  interactive:true
+ }).addTo(map);
+
+ scanMarker.bindPopup('Spatial sampling scan');
+
+ scanIndex=0;
+ updateScanDisplay();
+}
+
+function updateScanDisplay(){
+ if(!scanCoords.length)return;
+
+ const p=pts[scanIndex];
+ const f=frames[active];
+ const v=f?f.vals[scanIndex]:null;
+
+ $('motionPoint').textContent='LOCATION '+(scanIndex+1)+' / '+pts.length;
+ $('motionValue').textContent=v&&v.anom!==null?fmt(v.anom):'NO DATA';
+
+ if(scanMarker){
+  scanMarker.setLatLng(scanCoords[scanIndex]);
+  scanMarker.setPopupContent(
+   '<div class="popup-title">Spatial scan location '+(scanIndex+1)+'</div>'+
+   '<div>'+p.lat.toFixed(3)+'°N, '+Math.abs(p.lon).toFixed(3)+'°W</div>'+
+   '<div class="popup-val" style="color:'+color(v?v.anom:null)+'">'+
+   (v&&v.anom!==null?fmt(v.anom):'No data')+'</div>'+
+   '<div>Daily maximum: '+(v&&v.actual!==null?v.actual.toFixed(1)+' °C':'—')+'</div>'+
+   '<div>Scan sequence only — not a wind trajectory.</div>'
+  );
+ }
+}
+
+function advanceScan(){
+ if(!scanCoords.length)return;
+
+ scanIndex=(scanIndex+1)%scanCoords.length;
+
+ // Reset the trail when a complete circuit is finished.
+ if(scanIndex===0)scanTrail=[];
+
+ scanTrail.push(scanCoords[scanIndex]);
+
+ if(trailLine)trailLine.setLatLngs(scanTrail);
+ updateScanDisplay();
+
+ // Highlight the currently scanned sample point.
+ markers.forEach((m,i)=>{
+  if(i===scanIndex)m.setZIndexOffset(1000);
+  else m.setZIndexOffset(0);
+ });
+}
+
+function startScan(){
+ stopScan();
+ if(!frames.length)return;
+ scanTimer=setInterval(advanceScan,160);
+}
+
+function stopScan(){
+ if(scanTimer){
+  clearInterval(scanTimer);
+  scanTimer=null;
+ }
+}
+
+/* -------------------------------------------------------
+   6. LOAD CLIMATE DATA
+------------------------------------------------------- */
 async function loadSeason(){
-  if($('load').disabled)return;
-  stopPlay();$('load').disabled=true;
-  $('csv').disabled=true;
-  setStatus('Preparing ERA5-Land data. The 30-year baseline is split into small requests to avoid API limits…');
-  frames=[];rawRows=[];markers.forEach(m=>map.removeLayer(m));markers=[];
-  $('frame').disabled=true;['play','prev','next'].forEach(id=>$(id).disabled=true);
-  const year=Number($('year').value),dates=dateRange(year);
-  try{
-    const normals=await buildBaseline();
-    setStatus('Baseline ready. Retrieving daily temperatures for the '+year+' rainy season…');
-    const seasonData=asLocations(await getJSON(apiUrl(dates[0],dates[dates.length-1])));
-    if(seasonData.length!==pts.length)throw new Error('Season request returned '+seasonData.length+' locations; expected '+pts.length+'.');
-    for(let p=0;p<seasonData.length;p++){
-      if(!seasonData[p].daily||!Array.isArray(seasonData[p].daily.time))throw new Error('Season data are incomplete for sample location '+(p+1)+'.');
-    }
-    for(let i=0;i<dates.length;i++){
-      const vals=[];
-      for(let p=0;p<pts.length;p++){
-        const daily=seasonData[p].daily,ix=daily.time.indexOf(dates[i]);
-        const actual=ix>=0?daily.temperature_2m_max[ix]:null;
-        const normal=normals[p][dates[i].slice(5)];
-        vals.push({actual,normal,anom:Number.isFinite(actual)&&Number.isFinite(normal)?actual-normal:null});
-      }
-      frames.push({date:dates[i],vals});
-    }
-    rawRows=[];
-    frames.forEach(f=>f.vals.forEach((v,i)=>rawRows.push({date:f.date,latitude:pts[i].lat,longitude:pts[i].lon,tmax:v.actual,normal:v.normal,anomaly:v.anom})));
-    $('frame').max=frames.length-1;$('frame').disabled=false;$('frame').value=0;
-    $('framecount').textContent=frames.length+' daily frames';
-    ['play','prev','next','csv'].forEach(id=>$(id).disabled=false);
-    $('count').textContent=pts.length+' sample locations';
-    buildMarkers();updateAnalytics();showFrame(0);
-    setStatus('Loaded '+frames.length+' daily frames across '+pts.length+' sample locations. Baseline: 1991–2020 calendar-day means. This baseline is cached in this browser for future visits.');
-  }catch(e){
-    console.error(e);
-    setStatus('Could not load climate data: '+e.message+'. Wait briefly and retry. If this is the first run, keep this page open while the 1991–2020 baseline is assembled.',true);
-  }finally{$('load').disabled=false}
+ if(loading)return;
+ loading=true;
+ stopPlay();
+ stopScan();
+
+ $('load').disabled=true;
+ setStatus('Retrieving ERA5-Land baseline and selected-season data. This may take some time…');
+
+ frames=[];
+ rawRows=[];
+ markers.forEach(m=>map.removeLayer(m));
+ markers=[];
+
+ if(routeLine)map.removeLayer(routeLine);
+ if(trailLine)map.removeLayer(trailLine);
+ if(scanMarker)map.removeLayer(scanMarker);
+ routeLine=trailLine=scanMarker=null;
+
+ const year=Number($('year').value);
+ const dates=dateRange(year);
+
+ try{
+  // Smaller baseline requests help reduce oversized API calls.
+  const baselineLocations=[];
+  const groups=[];
+  for(let i=0;i<pts.length;i+=5)groups.push(pts.slice(i,i+5));
+
+  for(let g=0;g<groups.length;g++){
+   setStatus('Retrieving 1991–2020 baseline locations '+(g+1)+' / '+groups.length+'…');
+
+   const result=await getJSON(apiUrl('1991-01-01','2020-12-31',groups[g]));
+   const locations=asLocations(result);
+
+   if(locations.length!==groups[g].length){
+    throw new Error('Unexpected baseline location response.');
+   }
+
+   baselineLocations.push(...locations);
+   if(g<groups.length-1)await new Promise(r=>setTimeout(r,900));
+  }
+
+  setStatus('Baseline retrieved. Downloading selected-season daily data…');
+
+  const seasonGroups=[];
+  for(let i=0;i<pts.length;i+=5)seasonGroups.push(pts.slice(i,i+5));
+
+  const seasonLocations=Array(pts.length);
+
+  for(let g=0;g<seasonGroups.length;g++){
+   const result=await getJSON(apiUrl(dates[0],dates[dates.length-1],seasonGroups[g]));
+   const locations=asLocations(result);
+
+   if(locations.length!==seasonGroups[g].length){
+    throw new Error('Unexpected season data response.');
+   }
+
+   const offset=g*5;
+   locations.forEach((loc,i)=>seasonLocations[offset+i]=loc);
+   if(g<seasonGroups.length-1)await new Promise(r=>setTimeout(r,700));
+  }
+
+  const normals=makeBaseline(baselineLocations);
+
+  for(let i=0;i<dates.length;i++){
+   const vals=[];
+
+   for(let p=0;p<pts.length;p++){
+    const daily=seasonLocations[p].daily;
+    const ix=daily.time.indexOf(dates[i]);
+    const actual=ix>=0?daily.temperature_2m_max[ix]:null;
+    const normal=normals[p][dates[i].slice(5)];
+
+    vals.push({
+     actual,
+     normal,
+     anom:Number.isFinite(actual)&&Number.isFinite(normal)?actual-normal:null
+    });
+   }
+
+   frames.push({date:dates[i],vals});
+  }
+
+  rawRows=[];
+  frames.forEach(f=>{
+   f.vals.forEach((v,i)=>{
+    rawRows.push({
+     date:f.date,
+     latitude:pts[i].lat,
+     longitude:pts[i].lon,
+     tmax:v.actual,
+     normal:v.normal,
+     anomaly:v.anom
+    });
+   });
+  });
+
+  $('frame').max=frames.length-1;
+  $('frame').disabled=false;
+  $('frame').value=0;
+  $('framecount').textContent=frames.length+' daily frames';
+
+  ['play','prev','next','csv'].forEach(id=>$(id).disabled=false);
+  $('count').textContent=pts.length+' sample locations';
+
+  buildMarkers();
+  createScan();
+  updateAnalytics();
+  showFrame(0);
+
+  setStatus('Loaded '+frames.length+' daily frames across '+pts.length+' sample locations. Press PLAY to animate the spatial scan and daily anomaly sequence.');
+
+ }catch(e){
+  setStatus('Could not load climate data: '+e.message+'. Check your internet connection or try again later.',true);
+ }finally{
+  loading=false;
+  $('load').disabled=false;
+ }
 }
-function color(v){return v===null?'#8493a2':Math.abs(v)<.2?'#aab7c4':v>0?'#ff925f':'#5da9ff'}
-function towerIcon(v){let h=Math.max(8,Math.min(100,Math.abs(v||0)*13+8));let c=color(v);return L.divIcon({className:'tower-icon',html:'<div class="tower" style="--h:'+h+'px;--c:'+c+'"><i class="front"></i><i class="side"></i><i class="cap"></i></div>',iconSize:[22,h],iconAnchor:[10,h]})}
-function buildMarkers(){markers=pts.map((p,i)=>{let m=L.marker([p.lat,p.lon],{icon:towerIcon(null)}).addTo(map);m.bindPopup('Loading location…');return m})}
-function showFrame(i){if(!frames.length)return;active=Math.max(0,Math.min(frames.length-1,i));let f=frames[active],valid=f.vals.filter(v=>v.anom!==null),mean=valid.reduce((s,v)=>s+v.anom,0)/(valid.length||1),warm=valid.filter(v=>v.anom>0).length,cool=valid.length-warm;$('frame').value=active;$('dateLabel').textContent=new Date(f.date+'T12:00:00Z').toLocaleDateString('en-GB',{day:'2-digit',month:'long',year:'numeric',timeZone:'UTC'});$('meanLabel').textContent=fmt(mean);$('meanLabel').style.color=color(mean);$('mapdate').textContent=f.date+'  /  '+fmt(mean)+' NATIONAL SAMPLE MEAN';f.vals.forEach((v,j)=>{let p=pts[j],m=markers[j];m.setIcon(towerIcon(v.anom));m.setPopupContent('<div class="popup-title">ERA5-Land sample point '+(j+1)+'</div><div>'+p.lat.toFixed(3)+'°N, '+Math.abs(p.lon).toFixed(3)+'°W</div><div class="popup-val" style="color:'+color(v.anom)+'">'+(v.anom===null?'No data':fmt(v.anom))+'</div><div>Daily maximum: '+(v.actual===null?'—':v.actual.toFixed(1)+' °C')+'</div><div>1991–2020 normal: '+(v.normal===undefined?'—':v.normal.toFixed(1)+' °C')+'</div>')});}
-function updateAnalytics(){let all=frames.flatMap(f=>f.vals.map(v=>v.anom).filter(v=>v!==null)),daily=frames.map(f=>{let a=f.vals.map(v=>v.anom).filter(v=>v!==null);return a.reduce((s,v)=>s+v,0)/(a.length||1)}),mean=all.reduce((s,v)=>s+v,0)/(all.length||1),warm=daily.filter(v=>v>0).length,hi=Math.max(...daily),lo=Math.min(...daily),hiI=daily.indexOf(hi),loI=daily.indexOf(lo);$('kMean').textContent=fmt(mean);$('kWarm').textContent=warm+' / '+daily.length;$('kCool').textContent=fmt(lo);$('kHot').textContent=fmt(hi);let labels=frames.map(f=>f.date.slice(5));if(chart)chart.destroy();chart=new Chart($('chart'),{type:'line',data:{labels,datasets:[{data:daily,borderColor:'#50d5d0',backgroundColor:'#50d5d01c',fill:true,tension:.25,pointRadius:0,borderWidth:1.7}]},options:{maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#8da2b5',maxTicksLimit:6,font:{size:9}},grid:{display:false}},y:{ticks:{color:'#8da2b5',font:{size:9}},grid:{color:'#26394a'}}}}});$('insights').innerHTML='<div class="insight">Across all valid point-days, the mean anomaly was <b>'+fmt(mean)+'</b> relative to the 1991–2020 calendar-day baseline.</div><div class="insight">The national sample mean was above normal on <b>'+warm+' of '+daily.length+' days</b>.</div><div class="insight">Warmest national sample day: <b>'+frames[hiI].date+'</b> ('+fmt(hi)+'). Coolest: <b>'+frames[loI].date+'</b> ('+fmt(lo)+').</div>'}
-function stopPlay(){if(playTimer)clearInterval(playTimer);playTimer=null;$('play').textContent='▶ PLAY'}
-function play(){if(playTimer){stopPlay();return}$('play').textContent='Ⅱ PAUSE';playTimer=setInterval(()=>{if(active>=frames.length-1){stopPlay();return}showFrame(active+1)},Number($('speed').value))}
-$('play').onclick=play;$('prev').onclick=()=>{stopPlay();showFrame(active-1)};$('next').onclick=()=>{stopPlay();showFrame(active+1)};$('frame').oninput=e=>{stopPlay();showFrame(Number(e.target.value))};$('load').onclick=loadSeason;$('reset').onclick=()=>{stopPlay();frames=[];markers.forEach(m=>map.removeLayer(m));markers=[];$('frame').disabled=true;$('frame').value=0;$('frame').max=0;['play','prev','next','csv'].forEach(id=>$(id).disabled=true);['kMean','kWarm','kCool','kHot'].forEach(id=>$(id).textContent='—');$('dateLabel').textContent='—';$('meanLabel').textContent='—';$('mapdate').textContent='WAITING FOR DATA';$('framecount').textContent='0 frames';$('insights').innerHTML='<div class="insight">Load a season to calculate national daily summaries.</div>';if(chart){chart.destroy();chart=null}setStatus('Reset complete. Load a season to begin.')};
-$('csv').onclick=()=>{let rows=[['date','latitude','longitude','daily_max_temperature_c','1991_2020_calendar_day_normal_c','anomaly_c'],...rawRows.map(r=>[r.date,r.latitude,r.longitude,r.tmax,r.normal,r.anomaly])];let csv=rows.map(r=>r.map(v=>v===null||v===undefined?'':String(v)).join(',')).join('\n');let a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download='Gambia_ERA5Land_Daily_Temperature_Anomalies_'+$('year').value+'.csv';a.click();URL.revokeObjectURL(a.href)};
+
+/* -------------------------------------------------------
+   7. SAMPLE MARKERS AND DAILY MAP
+------------------------------------------------------- */
+function buildMarkers(){
+ markers=pts.map((p,i)=>{
+  let m=L.marker([p.lat,p.lon],{icon:towerIcon(null)}).addTo(map);
+  m.bindPopup('Loading location…');
+  return m;
+ });
+}
+
+function showFrame(i){
+ if(!frames.length)return;
+
+ active=Math.max(0,Math.min(frames.length-1,i));
+
+ const f=frames[active];
+ const valid=f.vals.filter(v=>v.anom!==null);
+ const mean=valid.reduce((s,v)=>s+v.anom,0)/(valid.length||1);
+
+ $('frame').value=active;
+ $('dateLabel').textContent=new Date(f.date+'T12:00:00Z').toLocaleDateString(
+  'en-GB',{day:'2-digit',month:'long',year:'numeric',timeZone:'UTC'}
+ );
+ $('meanLabel').textContent=fmt(mean);
+ $('meanLabel').style.color=color(mean);
+ $('mapdate').textContent=f.date+' / '+fmt(mean)+' NATIONAL SAMPLE MEAN';
+
+ f.vals.forEach((v,j)=>{
+  const p=pts[j];
+  const m=markers[j];
+
+  m.setIcon(towerIcon(v.anom));
+  m.setPopupContent(
+   '<div class="popup-title">ERA5-Land sample point '+(j+1)+'</div>'+
+   '<div>'+p.lat.toFixed(3)+'°N, '+Math.abs(p.lon).toFixed(3)+'°W</div>'+
+   '<div class="popup-val" style="color:'+color(v.anom)+'">'+
+   (v.anom===null?'No data':fmt(v.anom))+'</div>'+
+   '<div>Daily maximum: '+(v.actual===null?'—':v.actual.toFixed(1)+' °C')+'</div>'+
+   '<div>1991–2020 normal: '+(v.normal===undefined?'—':v.normal.toFixed(1)+' °C')+'</div>'
+  );
+ });
+
+ updateScanDisplay();
+}
+
+/* -------------------------------------------------------
+   8. SEASON ANALYTICS
+------------------------------------------------------- */
+function updateAnalytics(){
+ const all=frames.flatMap(f=>f.vals.map(v=>v.anom).filter(v=>v!==null));
+
+ const daily=frames.map(f=>{
+  const a=f.vals.map(v=>v.anom).filter(v=>v!==null);
+  return a.reduce((s,v)=>s+v,0)/(a.length||1);
+ });
+
+ const mean=all.reduce((s,v)=>s+v,0)/(all.length||1);
+ const warm=daily.filter(v=>v>0).length;
+ const hi=Math.max(...daily);
+ const lo=Math.min(...daily);
+ const hiI=daily.indexOf(hi);
+ const loI=daily.indexOf(lo);
+
+ $('kMean').textContent=fmt(mean);
+ $('kWarm').textContent=warm+' / '+daily.length;
+ $('kCool').textContent=fmt(lo);
+ $('kHot').textContent=fmt(hi);
+
+ const labels=frames.map(f=>f.date.slice(5));
+
+ if(chart)chart.destroy();
+
+ chart=new Chart($('chart'),{
+  type:'line',
+  data:{
+   labels,
+   datasets:[{
+    data:daily,
+    borderColor:'#50d5d0',
+    backgroundColor:'#50d5d01c',
+    fill:true,
+    tension:.25,
+    pointRadius:0,
+    borderWidth:1.7
+   }]
+  },
+  options:{
+   maintainAspectRatio:false,
+   plugins:{legend:{display:false}},
+   scales:{
+    x:{
+     ticks:{color:'#8da2b5',maxTicksLimit:6,font:{size:9}},
+     grid:{display:false}
+    },
+    y:{
+     ticks:{color:'#8da2b5',font:{size:9}},
+     grid:{color:'#26394a'}
+    }
+   }
+  }
+ });
+
+ $('insights').innerHTML=
+  '<div class="insight">Across all valid point-days, the mean anomaly was <b>'+fmt(mean)+'</b> relative to the 1991–2020 calendar-day baseline.</div>'+
+  '<div class="insight">The national sample mean was above normal on <b>'+warm+' of '+daily.length+' days</b>.</div>'+
+  '<div class="insight">Warmest national sample day: <b>'+frames[hiI].date+'</b> ('+fmt(hi)+'). Coolest: <b>'+frames[loI].date+'</b> ('+fmt(lo)+').</div>';
+}
+
+/* -------------------------------------------------------
+   9. PLAYBACK CONTROLS
+------------------------------------------------------- */
+function stopPlay(){
+ if(playTimer){
+  clearInterval(playTimer);
+  playTimer=null;
+ }
+ stopScan();
+ $('play').textContent='▶ PLAY';
+}
+
+function play(){
+ if(!frames.length)return;
+
+ if(playTimer){
+  stopPlay();
+  return;
+ }
+
+ if(active>=frames.length-1)showFrame(0);
+
+ $('play').textContent='Ⅱ PAUSE';
+ startScan();
+
+ playTimer=setInterval(()=>{
+  if(active>=frames.length-1){
+   stopPlay();
+   return;
+  }
+
+  showFrame(active+1);
+ },Number($('speed').value));
+}
+
+$('play').onclick=play;
+
+$('prev').onclick=()=>{
+ stopPlay();
+ showFrame(active-1);
+};
+
+$('next').onclick=()=>{
+ stopPlay();
+ showFrame(active+1);
+};
+
+$('frame').oninput=e=>{
+ stopPlay();
+ showFrame(Number(e.target.value));
+};
+
+$('speed').onchange=()=>{
+ if(playTimer){
+  stopPlay();
+  play();
+ }
+};
+
+$('load').onclick=loadSeason;
+
+/* -------------------------------------------------------
+   10. RESET
+------------------------------------------------------- */
+$('reset').onclick=()=>{
+ stopPlay();
+ frames=[];
+ rawRows=[];
+
+ markers.forEach(m=>map.removeLayer(m));
+ markers=[];
+
+ if(routeLine)map.removeLayer(routeLine);
+ if(trailLine)map.removeLayer(trailLine);
+ if(scanMarker)map.removeLayer(scanMarker);
+
+ routeLine=trailLine=scanMarker=null;
+ scanCoords=[];
+ scanTrail=[];
+ scanIndex=0;
+
+ $('frame').disabled=true;
+ $('frame').value=0;
+ $('frame').max=0;
+
+ ['play','prev','next','csv'].forEach(id=>$(id).disabled=true);
+ ['kMean','kWarm','kCool','kHot'].forEach(id=>$(id).textContent='—');
+
+ $('dateLabel').textContent='—';
+ $('meanLabel').textContent='—';
+ $('mapdate').textContent='WAITING FOR DATA';
+ $('motionPoint').textContent='LOCATION — / 30';
+ $('motionValue').textContent='WAITING';
+ $('framecount').textContent='0 frames';
+
+ $('insights').innerHTML='<div class="insight">Load a season to calculate national daily summaries.</div>';
+
+ if(chart){
+  chart.destroy();
+  chart=null;
+ }
+
+ setStatus('Reset complete. Load a season to begin.');
+};
+
+/* -------------------------------------------------------
+   11. CSV EXPORT
+------------------------------------------------------- */
+$('csv').onclick=()=>{
+ const rows=[
+  ['date','latitude','longitude','daily_max_temperature_c','1991_2020_calendar_day_normal_c','anomaly_c'],
+  ...rawRows.map(r=>[
+   r.date,r.latitude,r.longitude,r.tmax,r.normal,r.anomaly
+  ])
+ ];
+
+ const csv=rows.map(r=>r.map(v=>{
+  if(v===null||v===undefined)return '';
+  const s=String(v);
+  return '"'+s.replace(/"/g,'""')+'"';
+ }).join(',')).join('\n');
+
+ const blob=new Blob([csv],{type:'text/csv;charset=utf-8'});
+ const url=URL.createObjectURL(blob);
+ const a=document.createElement('a');
+ a.href=url;
+ a.download='Gambia_ERA5Land_Daily_Temperature_Anomalies_'+$('year').value+'.csv';
+ document.body.appendChild(a);
+ a.click();
+ a.remove();
+ URL.revokeObjectURL(url);
+};
+
+/* -------------------------------------------------------
+   12. START
+------------------------------------------------------- */
 initMap();
-</script></body></html>
+</script>
+</body>
+</html>
